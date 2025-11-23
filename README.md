@@ -1,6 +1,6 @@
 # Celect
 
-A pretty fast columnar SQL query engine for CSV files.
+A tiny yet pretty fast columnar SQL query engine for CSV files.
 
 ## Features
 
