@@ -1,5 +1,7 @@
 # Celect
 
+![Cover Image](cover.png)
+
 A tiny yet pretty fast columnar SQL query engine for CSV files.
 
 ## Features
