@@ -27,7 +27,7 @@ EOF
 
 Start the REPL and run queries:
 
-```bash
+```text
 $ cargo run --bin celect
 
 Celect SQL Engine v0.0.2
