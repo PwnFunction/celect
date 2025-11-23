@@ -1,0 +1,6 @@
+/target
+
+# Generated test data
+test_*.csv
+large_data.csv
+benchmark.csv
