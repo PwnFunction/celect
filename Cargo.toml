@@ -7,6 +7,10 @@ edition = "2024"
 name = "benchmark"
 path = "benchmark.rs"
 
+[[bin]]
+name = "breakdown"
+path = "breakdown.rs"
+
 [dependencies]
 tree-sitter = "0.21"
 colored = "2.1"

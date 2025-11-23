@@ -27,3 +27,13 @@ WHERE (age > 25 AND active = true) OR name = 'Bob'
 LIMIT 10
 ```
 
+## Usage
+
+```bash
+# see query execution breakdown
+cargo run --bin breakdown
+
+# run performance benchmark
+cargo run --release --bin benchmark
+```
+
