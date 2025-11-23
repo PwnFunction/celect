@@ -327,6 +327,10 @@
     "named": false
   },
   {
+    "type": "\"",
+    "named": false
+  },
+  {
     "type": "'",
     "named": false
   },
@@ -344,6 +348,10 @@
   },
   {
     "type": ",",
+    "named": false
+  },
+  {
+    "type": ";",
     "named": false
   },
   {
@@ -371,55 +379,7 @@
     "named": false
   },
   {
-    "type": "AND",
-    "named": false
-  },
-  {
-    "type": "COUNT",
-    "named": false
-  },
-  {
-    "type": "FROM",
-    "named": false
-  },
-  {
-    "type": "LIMIT",
-    "named": false
-  },
-  {
-    "type": "NOT",
-    "named": false
-  },
-  {
-    "type": "NULL",
-    "named": false
-  },
-  {
-    "type": "OFFSET",
-    "named": false
-  },
-  {
-    "type": "OR",
-    "named": false
-  },
-  {
-    "type": "SELECT",
-    "named": false
-  },
-  {
-    "type": "WHERE",
-    "named": false
-  },
-  {
-    "type": "false",
-    "named": false
-  },
-  {
     "type": "number_literal",
     "named": true
-  },
-  {
-    "type": "true",
-    "named": false
   }
 ]

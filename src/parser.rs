@@ -345,8 +345,9 @@ impl Parser {
 
     fn transform_file_name(&self, node: &Node, source: &str) -> ParseResult<FromClause> {
         let name = self.get_node_text(node, source)?;
-        // if it's a string literal, strip the quotes
-        let file_name = if name.starts_with("'") && name.ends_with("'") {
+        // if it's a string literal, strip the quotes (both ' and ")
+        let file_name = if (name.starts_with("'") && name.ends_with("'")) || 
+                           (name.starts_with('"') && name.ends_with('"')) {
             name[1..name.len() - 1].to_string()
         } else {
             name
@@ -388,8 +389,9 @@ impl Parser {
                         match child.kind() {
                             "string_literal" => {
                                 let text = self.get_node_text(&child, source)?;
-                                // remove quotes
-                                let text = text.trim_matches('\'');
+                                // remove quotes (both ' and ")
+                                let text = text.trim_start_matches(&['\'', '"'][..])
+                                              .trim_end_matches(&['\'', '"'][..]);
                                 return Ok(Expression::Literal(LiteralValue::String(
                                     text.to_string(),
                                 )));
@@ -631,7 +633,9 @@ impl Parser {
                 match child.kind() {
                     "string_literal" => {
                         let text = self.get_node_text(&child, source)?;
-                        let text = text.trim_matches('\'');
+                        // remove quotes (both ' and ")
+                        let text = text.trim_start_matches(&['\'', '"'][..])
+                                      .trim_end_matches(&['\'', '"'][..]);
                         return Ok(Expression::Literal(LiteralValue::String(text.to_string())));
                     }
                     "number_literal" => {

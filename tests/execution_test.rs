@@ -516,3 +516,267 @@ fn test_dead_code_elimination_in_execution() {
         Some(Value::Varchar("Alice".to_string()))
     );
 }
+
+#[test]
+fn test_numeric_coercion_float_gt_integer() {
+    // test Float column > Integer literal
+    let test_file = TestFile::new(
+        "coercion_float_int",
+        "id,name,score\n1,Alice,85.5\n2,Bob,92.3\n3,Charlie,88.0\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE score > 90", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 1); // only Bob (92.3)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_integer_lt_float() {
+    // test Integer column < Float literal
+    let test_file = TestFile::new(
+        "coercion_int_float",
+        "id,name,age\n1,Alice,25\n2,Bob,30\n3,Charlie,35\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE age < 30.5", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 2); // alice (25) and Bob (30)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Alice".to_string()))
+    );
+    assert_eq!(
+        results[0].get_value(0, 1),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_float_eq_integer() {
+    // test Float column = Integer literal
+    let test_file = TestFile::new(
+        "coercion_eq",
+        "id,name,score\n1,Alice,90.0\n2,Bob,92.5\n3,Charlie,90.0\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE score = 90", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 2); // alice and Charlie (both 90.0)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Alice".to_string()))
+    );
+    assert_eq!(
+        results[0].get_value(0, 1),
+        Some(Value::Varchar("Charlie".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_float_gte_integer() {
+    // test Float column >= Integer literal
+    let test_file = TestFile::new(
+        "coercion_gte",
+        "id,name,score\n1,Alice,89.9\n2,Bob,90.0\n3,Charlie,90.1\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE score >= 90", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 2); // bob (90.0) and Charlie (90.1)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+    assert_eq!(
+        results[0].get_value(0, 1),
+        Some(Value::Varchar("Charlie".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_integer_lte_float() {
+    // test Integer column <= Float literal
+    let test_file = TestFile::new(
+        "coercion_lte",
+        "id,name,age\n1,Alice,29\n2,Bob,30\n3,Charlie,31\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE age <= 30.0", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 2); // alice (29) and Bob (30)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Alice".to_string()))
+    );
+    assert_eq!(
+        results[0].get_value(0, 1),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_float_ne_integer() {
+    // test Float column != Integer literal
+    let test_file = TestFile::new(
+        "coercion_ne",
+        "id,name,score\n1,Alice,90.0\n2,Bob,92.5\n3,Charlie,90.0\n",
+    );
+
+    let sql = format!("SELECT name FROM '{}' WHERE score != 90", test_file.path);
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 1); // only Bob (92.5)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+}
+
+#[test]
+fn test_numeric_coercion_complex_expression() {
+    // test numeric coercion in complex AND/OR expressions
+    let test_file = TestFile::new(
+        "coercion_complex",
+        "id,name,age,score\n1,Alice,25,85.5\n2,Bob,30,92.3\n3,Charlie,35,88.0\n4,Diana,28,95.7\n",
+    );
+
+    let sql = format!(
+        "SELECT name FROM '{}' WHERE age >= 30 AND score > 90",
+        test_file.path
+    );
+    let mut parser = Parser::new();
+    let query = parser.parse(&sql).unwrap();
+
+    let binder = Binder::new();
+    let bound_query = binder.bind(query).unwrap();
+
+    let planner = Planner::new();
+    let logical_plan = planner.plan(bound_query);
+
+    let optimizer = Optimizer::new();
+    let optimized_plan = optimizer.optimize(logical_plan);
+
+    let physical_planner = PhysicalPlanner::new();
+    let (operators, schemas) = physical_planner.plan(optimized_plan);
+
+    let mut executor = PipelineExecutor::new(operators, schemas);
+    let results = executor.execute();
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].count, 1); // only Bob (age=30, score=92.3)
+    assert_eq!(
+        results[0].get_value(0, 0),
+        Some(Value::Varchar("Bob".to_string()))
+    );
+}

@@ -40,12 +40,12 @@ impl PhysicalFilter {
             BoundExpression::Equal(left, right) => {
                 let left_val = self.evaluate_expression(left, chunk, row_idx)?;
                 let right_val = self.evaluate_expression(right, chunk, row_idx)?;
-                Some(Value::Boolean(left_val == right_val))
+                Some(Value::Boolean(self.compare_equal(&left_val, &right_val)))
             }
             BoundExpression::NotEqual(left, right) => {
                 let left_val = self.evaluate_expression(left, chunk, row_idx)?;
                 let right_val = self.evaluate_expression(right, chunk, row_idx)?;
-                Some(Value::Boolean(left_val != right_val))
+                Some(Value::Boolean(!self.compare_equal(&left_val, &right_val)))
             }
             BoundExpression::GreaterThan(left, right) => {
                 let left_val = self.evaluate_expression(left, chunk, row_idx)?;
@@ -97,10 +97,25 @@ impl PhysicalFilter {
         }
     }
 
+    fn compare_equal(&self, left: &Value, right: &Value) -> bool {
+        match (left, right) {
+            (Value::Integer(l), Value::Integer(r)) => l == r,
+            (Value::Float(l), Value::Float(r)) => l == r,
+            (Value::Integer(l), Value::Float(r)) => (*l as f64) == *r,
+            (Value::Float(l), Value::Integer(r)) => *l == (*r as f64),
+            (Value::Boolean(l), Value::Boolean(r)) => l == r,
+            (Value::Varchar(l), Value::Varchar(r)) => l == r,
+            (Value::Null, Value::Null) => true,
+            _ => false,
+        }
+    }
+
     fn compare_greater(&self, left: &Value, right: &Value) -> bool {
         match (left, right) {
             (Value::Integer(l), Value::Integer(r)) => l > r,
             (Value::Float(l), Value::Float(r)) => l > r,
+            (Value::Integer(l), Value::Float(r)) => (*l as f64) > *r,
+            (Value::Float(l), Value::Integer(r)) => *l > (*r as f64),
             (Value::Varchar(l), Value::Varchar(r)) => l > r,
             _ => false,
         }
@@ -110,6 +125,8 @@ impl PhysicalFilter {
         match (left, right) {
             (Value::Integer(l), Value::Integer(r)) => l >= r,
             (Value::Float(l), Value::Float(r)) => l >= r,
+            (Value::Integer(l), Value::Float(r)) => (*l as f64) >= *r,
+            (Value::Float(l), Value::Integer(r)) => *l >= (*r as f64),
             (Value::Varchar(l), Value::Varchar(r)) => l >= r,
             _ => false,
         }
@@ -119,6 +136,8 @@ impl PhysicalFilter {
         match (left, right) {
             (Value::Integer(l), Value::Integer(r)) => l < r,
             (Value::Float(l), Value::Float(r)) => l < r,
+            (Value::Integer(l), Value::Float(r)) => (*l as f64) < *r,
+            (Value::Float(l), Value::Integer(r)) => *l < (*r as f64),
             (Value::Varchar(l), Value::Varchar(r)) => l < r,
             _ => false,
         }
@@ -128,6 +147,8 @@ impl PhysicalFilter {
         match (left, right) {
             (Value::Integer(l), Value::Integer(r)) => l <= r,
             (Value::Float(l), Value::Float(r)) => l <= r,
+            (Value::Integer(l), Value::Float(r)) => (*l as f64) <= *r,
+            (Value::Float(l), Value::Integer(r)) => *l <= (*r as f64),
             (Value::Varchar(l), Value::Varchar(r)) => l <= r,
             _ => false,
         }

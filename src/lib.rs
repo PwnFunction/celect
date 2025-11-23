@@ -1,4 +1,5 @@
 pub mod binder;
+pub mod config;
 pub mod execution;
 pub mod optimizer;
 pub mod parser;

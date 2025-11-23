@@ -938,4 +938,139 @@ mod tests {
             _ => panic!("Expected Or at root of complex expression"),
         }
     }
+
+    #[test]
+    fn test_case_insensitive_keywords() {
+        let mut parser = Parser::new();
+        let sql = "select * from users where age > 25";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(query.select.columns, vec![SelectColumn::All]);
+        assert_eq!(query.from.file, "users");
+        assert!(query.where_clause.is_some());
+    }
+
+    #[test]
+    fn test_mixed_case_keywords() {
+        let mut parser = Parser::new();
+        let sql = "SeLeCt name, age FrOm 'data.csv' WhErE active = TrUe";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(
+            query.select.columns,
+            vec![
+                SelectColumn::Column("name".to_string()),
+                SelectColumn::Column("age".to_string()),
+            ]
+        );
+        assert_eq!(query.from.file, "data.csv");
+        assert!(query.where_clause.is_some());
+    }
+
+    #[test]
+    fn test_lowercase_logical_operators() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM users WHERE active = true and age > 18 or admin = true";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_lowercase_not_operator() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM users WHERE not active = false";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_semicolon_optional() {
+        let mut parser = Parser::new();
+        let sql_without = "SELECT * FROM users";
+        let sql_with = "SELECT * FROM users;";
+        
+        let result_without = parser.parse(sql_without);
+        assert!(result_without.is_ok());
+        
+        let mut parser2 = Parser::new();
+        let result_with = parser2.parse(sql_with);
+        assert!(result_with.is_ok());
+        
+        // both should produce same query structure
+        let query_without = result_without.unwrap();
+        let query_with = result_with.unwrap();
+        assert_eq!(query_without.from.file, query_with.from.file);
+    }
+
+    #[test]
+    fn test_semicolon_with_where() {
+        let mut parser = Parser::new();
+        let sql = "SELECT name FROM 'data.csv' WHERE age > 25;";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(
+            query.select.columns,
+            vec![SelectColumn::Column("name".to_string())]
+        );
+        assert_eq!(query.from.file, "data.csv");
+        assert!(query.where_clause.is_some());
+    }
+
+    #[test]
+    fn test_semicolon_with_limit() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM users LIMIT 10;";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(query.limit, Some(10));
+    }
+
+    #[test]
+    fn test_double_quotes_in_strings() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM \"data.csv\" WHERE name = \"Alice\"";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(query.from.file, "data.csv");
+    }
+
+    #[test]
+    fn test_mixed_quotes() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM 'data.csv' WHERE name = \"Bob\"";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_lowercase_count() {
+        let mut parser = Parser::new();
+        let sql = "select count(*) from users";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_lowercase_limit_offset() {
+        let mut parser = Parser::new();
+        let sql = "select * from users limit 10 offset 5";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+        let query = result.unwrap();
+        assert_eq!(query.limit, Some(10));
+        assert_eq!(query.offset, Some(5));
+    }
+
+    #[test]
+    fn test_lowercase_null() {
+        let mut parser = Parser::new();
+        let sql = "SELECT * FROM users WHERE name = null";
+        let result = parser.parse(sql);
+        assert!(result.is_ok());
+    }
 }

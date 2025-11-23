@@ -1,17 +1,23 @@
+function kw(word) {
+  return new RegExp(word, 'i');
+}
+
 module.exports = grammar({
   name: 'sql',
 
+  extras: $ => [/\s/, /\n/],
+
   rules: {
-    source_file: $ => $._statement,
+    source_file: $ => seq($._statement, optional(';')),
 
     _statement: $ => choice(
       $.select_statement
     ),
 
     select_statement: $ => seq(
-      'SELECT',
+      kw('SELECT'),
       $.select_list,
-      'FROM',
+      kw('FROM'),
       $.file_name,
       optional($.where_clause),
       optional($.limit_clause),
@@ -35,8 +41,8 @@ module.exports = grammar({
     ),
     
     aggregate_function: $ => choice(
-      seq('COUNT', '(', '*', ')'),
-      seq('COUNT', '(', $.column_name, ')')
+      seq(kw('COUNT'), '(', '*', ')'),
+      seq(kw('COUNT'), '(', $.column_name, ')')
     ),
 
     column_name: $ => $._identifier,
@@ -47,17 +53,17 @@ module.exports = grammar({
     ),
 
     where_clause: $ => seq(
-      'WHERE',
+      kw('WHERE'),
       $.expression
     ),
 
     limit_clause: $ => seq(
-      'LIMIT',
+      kw('LIMIT'),
       $.number_literal
     ),
 
     offset_clause: $ => seq(
-      'OFFSET',
+      kw('OFFSET'),
       $.number_literal
     ),
 
@@ -65,16 +71,16 @@ module.exports = grammar({
 
     or_expression: $ => prec.left(1, choice(
       $.and_expression,
-      seq($.and_expression, 'OR', $.or_expression)
+      seq($.and_expression, kw('OR'), $.or_expression)
     )),
 
     and_expression: $ => prec.left(2, choice(
       $.not_expression,
-      seq($.not_expression, 'AND', $.and_expression)
+      seq($.not_expression, kw('AND'), $.and_expression)
     )),
 
     not_expression: $ => choice(
-      seq('NOT', $.not_expression),
+      seq(kw('NOT'), $.not_expression),
       $.primary_expression
     ),
 
@@ -99,14 +105,17 @@ module.exports = grammar({
       $.string_literal,
       $.number_literal,
       $.boolean_literal,
-      'NULL'
+      kw('NULL')
     ),
 
-    string_literal: $ => seq("'", /[^']*/, "'"),
+    string_literal: $ => choice(
+      seq("'", /[^']*/, "'"),
+      seq('"', /[^"]*/, '"')
+    ),
 
     number_literal: $ => /-?\d+(\.\d+)?/,
 
-    boolean_literal: $ => choice('true', 'false'),
+    boolean_literal: $ => choice(kw('true'), kw('false')),
 
     _identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/
   }
